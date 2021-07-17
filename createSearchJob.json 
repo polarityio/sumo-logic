@@ -1,0 +1,7 @@
+{
+  "query": "ERROR | count _sourceCategory=uploads/other",
+  "from": "2017-07-16T00:00:00",
+  "to": "2021-08-16T00:00:00",
+  "timeZone": "PST",
+  "byReceiptTime": true
+}

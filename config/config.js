@@ -5,8 +5,8 @@ module.exports = {
    * @type String
    * @required
    */
-  name: 'phishstats',
-  /**
+  name: 'Sumo Logic',
+  /*
    * The acronym that appears in the notification window when information from this integration
    * is displayed.  Note that the acronym is included as part of each "tag" in the summary information
    * for the integration.  As a result, it is best to keep it to 4 or less characters.  The casing used
@@ -15,7 +15,7 @@ module.exports = {
    * @type String
    * @required
    */
-  acronym: 'PS',
+  acronym: 'SL',
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
    *
@@ -23,9 +23,10 @@ module.exports = {
    * @optional
    */
   description:
-    'Searches the urlscan.io API and returns results from the most recent, relevant scan',
-  entityTypes: ['IPv4', 'IPv6', 'IPv4CIDR', 'domain', 'url', 'sha256'],
+    'Searches the IntSights API and returns results from the most recent, relevant scan',
+  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'SHA256'],
   onDemandOnly: true,
+  defaultColor: 'light-pink',
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
    * the below files can be used in your custom template.
@@ -33,7 +34,7 @@ module.exports = {
    * @type Array
    * @optional
    */
-  styles: ['./styles/ps.less'],
+  styles: ['./styles/styles.less'],
   /**
    * Provide custom component logic and template for rendering the integration details block.  If you do not
    * provide a custom template and/or component then the integration will display data as a table of key value
@@ -44,10 +45,10 @@ module.exports = {
    */
   block: {
     component: {
-      file: './components/ps-block.js'
+      file: './components/block.js'
     },
     template: {
-      file: './templates/ps-block.hbs'
+      file: './templates/block.hbs'
     }
   },
   request: {
@@ -70,15 +71,71 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'info' //trace, debug, info, warn, error, fatal
+    level: 'trace' //trace, debug, info, warn, error, fatal
   },
-  /**
-   * Options that are displayed to the user/admin in the Polarity integration user-interface.  Should be structured
-   * as an array of option objects.
-   *
-   * @type Array
-   * @optional
-   */
   options: [
+    {
+      key: 'accessId',
+      name: 'Access Id',
+      description: 'A valid Sumo Logic access id',
+      default: '',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'accessKey',
+      name: 'Access Key',
+      description: 'A valid Sumo Logic access key',
+      default: '',
+      type: 'password',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'query',
+      name: 'query',
+      description: 'A Sumo Logic query',
+      default: '',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'from',
+      name: 'from',
+      description: 'Starting date and time range for requested logs',
+      default: '',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'to',
+      name: 'to',
+      description: 'Ending date and time range for requested logs',
+      default: '',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'timeZone',
+      name: 'timeZone',
+      description: 'Timezone for logs, e.g. "PST"',
+      default: '',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
+      key: 'byReceiptTime',
+      name: 'byReceiptTime',
+      description: '',
+      default: '',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    }
   ]
 };
