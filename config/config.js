@@ -71,7 +71,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   options: [
     {
@@ -89,15 +89,6 @@ module.exports = {
       description: 'A valid Sumo Logic access key',
       default: '',
       type: 'password',
-      userCanEdit: false,
-      adminOnly: false
-    },
-    {
-      key: 'query',
-      name: 'query',
-      description: 'A Sumo Logic query',
-      default: '',
-      type: 'text',
       userCanEdit: false,
       adminOnly: false
     },
