@@ -1,18 +1,64 @@
-pre{
-    overflow-y: scroll;
-    overflow-x: hidden;
-    max-height: 200px;
-    padding: 5px;
-    margin-top: 5px;
-  }
-  .p-title {
-      margin-bottom: 10px;
+pre {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  max-height: 500px;
+  padding: 5px;
+  margin-top: 5px;
+  background-color: #fff;
+  font-family: 'Lucida Console', Monaco, monospace;
+}
+
+div.tab-container {
+  margin-top: 5px;
+}
+
+div.scrollable-block {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  resize: vertical;
+  min-height: 150px;
+  max-height: 500px;
+}
+
+div.fields-block {
+  font-family: monospace;
+  word-break: break-all;
+  line-height: 2em;
+  font-size: 11px;
+  font-weight: 400;
+
+  span.field-key {
+    background-color: rgba(0, 46, 63, 0.1);
+    padding: 1px 5px;
+    word-break: normal;
+    border-radius: 2px;
+    color: #000;
+    display: inline;
+    margin-right: 5px;
+    font-weight: bold;
   }
 
-  .p-value {
-    word-break: normal;
-    margin: 0px;
+  span.field-value {
+    display: inline;
+    word-break: break-all;
   }
-  .mb-1 {
-      margin-top: 25px;
-  }
+}
+
+div.message-block {
+  background-color: rgba(0, 46, 63, 0.1);
+  padding: 1px 5px;
+  word-break: normal;
+  border-radius: 2px;
+  color: #000;
+  display: inline;
+  margin-right: 5px;
+}
+
+span.field-title {
+  font-weight: bold;
+  color: red;
+}
+
+div.info-block {
+  margin-top: 20px;
+}
