@@ -2,12 +2,16 @@ const gaxios = require('gaxios');
 const fs = require('fs');
 const https = require('https');
 const config = require('./config/config');
+const errorToPojo = require('./utils/errorToPojo');
 
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 let Logger;
 
 function startup(logger) {
   Logger = logger;
+}
+
+const requestDefaults = (options) => {
   const {
     request: { ca, cert, key, passphrase, rejectUnauthorized, proxy }
   } = config;
@@ -20,102 +24,171 @@ function startup(logger) {
     ...(typeof rejectUnauthorized === 'boolean' && { rejectUnauthorized })
   });
 
+  if (_configFieldIsValid(proxy)) {
+    process.env.HTTP_PROXY = proxy;
+    process.env.HTTPS_PROXY = proxy;
+  }
+
   gaxios.instance.defaults = {
     agent: httpsAgent,
     headers: {
       Authorization:
-      // removed for init commit 
+        'Basic ' +
+        Buffer.from(options.accessId + ':' + options.accessKey).toString('base64'),
       'Content-type': 'application/json'
+    },
+    retryConfig: {
+      retry: 6,
+      httpMethodsToRetry: ['GET', 'POST'],
+      retryDelay: 1000
     },
     ...(_configFieldIsValid(proxy) && { proxy: { host: proxy } })
   };
-}
+};
 
 const doLookup = async (entities, options, cb) => {
   let lookupResults;
+
+  requestDefaults(options);
+
   try {
     entities.map(async (entity) => {
       lookupResults = await getJobMessages(entity, options);
-      Logger.trace({ FINAL_RESULTS: lookupResults });
     });
-  } catch (error) {
-    return error;
-  }
-
-  Logger.trace({ lookupResults }, 'lookupResults');
-  return cb(null, lookupResults);
-};
-
-// Create a job
-const createJob = async (options) => {
-  let result;
-  try {
-    result = await gaxios.request({
-      method: 'POST',
-      url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
-      data: JSON.stringify({
-        query: options.query,
-        from: options.from,
-        to: options.to,
-        timeZone: options.timeZone,
-        byReceiptTime: true
-      })
-    });
-
-    if (result.data.id) {
-      return result;
-    }
   } catch (err) {
-    throw err;
+    Logger.error({ err }, 'Get Lookup Results Failed');
+    let detailMsg = 'There was an unexpected error';
+
+    if (err.response) {
+      detailMsg = `Received unexpected HTTP status ${err.response.status}`;
+    } else if (err.request) {
+      detailMsg = `There was an HTTP err`;
+    } else {
+      detailMsg = err.message;
+    }
+    return cb(errorToPojo('err', err));
   }
+
+  const getResults = async () => {
+    if (lookupResults) {
+      Logger.trace({ lookupResults }, 'lookupResults');
+      return cb(null, lookupResults);
+    } else {
+      await sleep(1000);
+      return getResults();
+    }
+  };
+
+  return getResults();
 };
 
-const getCreatedJob = async (options) => {
+// const onMessage = async (payload, options, cb) => {
+//   if (payload.type === 'makeRequest') {
+//     return cb(null, {
+//       reply: 'asds'
+//     })
+//   } else {
+//     return cb(null, {})
+//   }
+// }
+
+const createJob = async (entity, options) => {
   let result;
-  const job = await createJob(options);
+
+  result = await gaxios.request({
+    method: 'POST',
+    url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
+    data: JSON.stringify({
+      query: `_sourceName =* and ` + `${entity.value}`, // query will find instances of entity in log messages
+      from: options.from,
+      to: options.to,
+      timeZone: options.timeZone,
+      byReceiptTime: true
+    })
+  });
+
+  return result;
+};
+
+const getCreatedJobId = async (entity, options) => {
+  let result;
+  const job = await createJob(entity, options);
 
   const makeRequest = async () => {
-    try {
-      result = await gaxios.request({
-        method: 'GET',
-        url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
-      });
+    result = await gaxios.request({
+      method: 'GET',
+      url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
+    });
 
-      if (result.data.state === 'DONE GATHERING RESULTS') {
-        return {
-          data: result,
-          jobId: job.data.id
-        };
-      } else {
-        await sleep(1000);
-        return makeRequest();
-      }
-    } catch (err) {
-      throw err;
+    if (result.data.state === 'DONE GATHERING RESULTS') {
+      return {
+        jobId: job.data.id
+      };
+    } else {
+      await sleep(1000);
+      return makeRequest();
     }
   };
   return makeRequest();
 };
 
 const getJobMessages = async (entity, options) => {
-  const createdJob = await getCreatedJob(options);
+  const createdJobId = await getCreatedJobId(entity, options);
 
-  Logger.trace({ JOB: createdJob });
+  results = await gaxios.request({
+    method: 'GET',
+    url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
+  });
 
-  try {
-    result = await gaxios.request({
-      method: 'GET',
-      url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJob.jobId}/messages?offset=0&limit=10` //make records and messages an optional, same as pagination?
-    });
-  } catch (err) {
-    throw err;
+  return [
+    {
+      entity,
+      data: { summary: getSummary(results.data), details: [results.data] }
+    }
+  ];
+};
+
+function getSummary(data) {
+  let tags = [];
+
+  if (Object.keys(data).length > 0) {
+    const totalMessages = data.messages.length;
+    tags.push(`Messages: ${totalMessages}`);
   }
 
-  return {
-    entity,
-    data: { summary: result.data, details: result.data }
-  };
-};
+  if (Object.keys(data).length > 0) {
+    data.messages.map((message) => {
+      tags.push(`_Source: ${message.map._source}`);
+    });
+  }
+  return tags;
+}
+
+function validateOption(errors, options, optionName, errMessage) {
+  if (
+    typeof options[optionName].value !== 'string' ||
+    (typeof options[optionName].value === 'string' &&
+      options[optionName].value.length === 0)
+  ) {
+    errors.push({
+      key: optionName,
+      message: errMessage
+    });
+  }
+}
+
+function validateOptions(options, callback) {
+  let errors = [];
+
+  validateOption(errors, options, 'accessId', 'You must provide a valid accessId.');
+  validateOption(errors, options, 'accessKey', 'You must provide a valid accessKey.');
+  validateOption(errors, options, 'from', 'You must provide a date range.');
+  validateOption(errors, options, 'to', 'You must provide a date range.');
+  validateOption(errors, options, 'timeZone', 'You must provide a valid timezone.');
+  validateOption(errors, options, 'byReceiptTime', 'You must provide a valid Password.');
+
+  callback(null, errors);
+}
 
 const sleep = async (time) =>
   new Promise((res, rej) => {
@@ -126,5 +199,6 @@ module.exports = {
   doLookup,
   startup,
   createJob,
-  getCreatedJob
+  getCreatedJobId,
+  validateOptions
 };
