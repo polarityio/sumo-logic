@@ -3,12 +3,21 @@ const fs = require('fs');
 const https = require('https');
 const config = require('./config/config');
 const errorToPojo = require('./utils/errorToPojo');
+const Bottleneck = require('bottleneck');
+const { create } = require('domain');
 
+const entityTemplateReplacementRegex = /{{entity}}/g;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
+
 let Logger;
+let limiter;
 
 function startup(logger) {
   Logger = logger;
+  /* 
+    - rate limit of four API requests per second (240 requests per minute) applies to all API calls from a user.
+    - rate limit of 10 concurrent requests to any API endpoint applies to an access key.
+  */
 }
 
 const requestDefaults = (options) => {
@@ -41,111 +50,126 @@ const requestDefaults = (options) => {
       retry: 6,
       httpMethodsToRetry: ['GET', 'POST'],
       retryDelay: 1000
-    },
-    ...(_configFieldIsValid(proxy) && { proxy: { host: proxy } })
+    }
   };
 };
 
 const doLookup = async (entities, options, cb) => {
-  let lookupResults;
-
   requestDefaults(options);
 
-  try {
-    entities.map(async (entity) => {
-      lookupResults = await getJobMessages(entity, options);
+  limiter = new Bottleneck({
+    maxConcurrent: 1,
+    minTime: 240,
+    highWater: 6,
+    strategy: Bottleneck.strategy.OVERFLOW
+  });
+
+  entities.forEach((entity) => {
+    limiter.submit(getJobMessages, entity, options, (err, result) => {
+      if (err) {
+        const handledError = handleError(err);
+        return cb(null, handledError);
+      } else {
+        return cb(null, result);
+      }
     });
-  } catch (err) {
-    Logger.error({ err }, 'Get Lookup Results Failed');
-    let detailMsg = 'There was an unexpected error';
-
-    if (err.response) {
-      detailMsg = `Received unexpected HTTP status ${err.response.status}`;
-    } else if (err.request) {
-      detailMsg = `There was an HTTP err`;
-    } else {
-      detailMsg = err.message;
-    }
-    return cb(errorToPojo('err', err));
-  }
-
-  const getResults = async () => {
-    if (lookupResults) {
-      Logger.trace({ lookupResults }, 'lookupResults');
-      return cb(null, lookupResults);
-    } else {
-      await sleep(1000);
-      return getResults();
-    }
-  };
-
-  return getResults();
+  });
 };
 
-// const onMessage = async (payload, options, cb) => {
-//   if (payload.type === 'makeRequest') {
-//     return cb(null, {
-//       reply: 'asds'
-//     })
-//   } else {
-//     return cb(null, {})
-//   }
-// }
-
 const createJob = async (entity, options) => {
-  let result;
-
-  result = await gaxios.request({
+  const query = options.query.replace(entityTemplateReplacementRegex, entity.value);
+  const job = await gaxios.request({
     method: 'POST',
     url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
     data: JSON.stringify({
-      query: `_sourceName =* and ` + `${entity.value}`, // query will find instances of entity in log messages
+      query,
       from: options.from,
       to: options.to,
       timeZone: options.timeZone,
       byReceiptTime: true
     })
   });
-
-  return result;
+  return job;
 };
 
 const getCreatedJobId = async (entity, options) => {
   let result;
-  const job = await createJob(entity, options);
 
-  const makeRequest = async () => {
-    result = await gaxios.request({
-      method: 'GET',
-      url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
+  try {
+    const job = await createJob(entity, options).catch((err) => {
+      if (err) {
+        throw err;
+      }
     });
 
-    if (result.data.state === 'DONE GATHERING RESULTS') {
-      return {
-        jobId: job.data.id
-      };
-    } else {
-      await sleep(1000);
-      return makeRequest();
-    }
-  };
-  return makeRequest();
+    const getJobResults = async () => {
+      result = await gaxios.request({
+        method: 'GET',
+        url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
+      });
+
+      if (result.data.state === 'DONE GATHERING RESULTS') {
+        return {
+          jobId: job.data.id
+        };
+      } else {
+        await sleep(1000);
+        return getJobResults();
+      }
+    };
+
+    return getJobResults();
+  } catch (err) {
+    throw err;
+  }
 };
 
-const getJobMessages = async (entity, options) => {
-  const createdJobId = await getCreatedJobId(entity, options);
+const getJobMessages = async (entity, options, callback) => {
+  let results;
 
-  results = await gaxios.request({
-    method: 'GET',
-    url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
+  const createdJobId = await getCreatedJobId(entity, options).catch((err) => {
+    if (err) {
+      throw err;
+    }
   });
 
-  return [
-    {
-      entity,
-      data: { summary: getSummary(results.data), details: [results.data] }
+  if (createdJobId) {
+    results = await gaxios.request({
+      method: 'GET',
+      url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
+    });
+  }
+
+  return callback(null, [
+    { entity, data: { summary: getSummary(results.data), details: results.data } }
+  ]);
+};
+
+const handleError = async (err) => {
+  switch (err) {
+    case 405:
+      return {
+        err,
+        detail: err.message
+      };
+    case 404:
+      return {
+        err,
+        detail: err.message
+      };
+    case 401: {
+      return {
+        err,
+        detail: err.message
+      };
     }
-  ];
+    case 400: {
+      return {
+        err,
+        detail: err.message
+      };
+    }
+  }
 };
 
 function getSummary(data) {
@@ -185,7 +209,12 @@ function validateOptions(options, callback) {
   validateOption(errors, options, 'from', 'You must provide a date range.');
   validateOption(errors, options, 'to', 'You must provide a date range.');
   validateOption(errors, options, 'timeZone', 'You must provide a valid timezone.');
-  validateOption(errors, options, 'byReceiptTime', 'You must provide a valid Password.');
+  validateOption(
+    errors,
+    options,
+    'byReceiptTime',
+    'You must provide a valid byReceiptTime.'
+  );
 
   callback(null, errors);
 }
@@ -199,6 +228,7 @@ module.exports = {
   doLookup,
   startup,
   createJob,
+  handleError,
   getCreatedJobId,
   validateOptions
 };
