@@ -1,51 +1,42 @@
-<ul class="nav nav-tabs">
-  <li class="nav-item">
-    <a
-      {{action "changeTab" "displayMessages"}}
-      class="nav-link
-        {{if (or (eq activeTab "displayMessages") (not activeTab)) "active"}}"
-      href="#"
-    >
-      Messages
-    </a>
-  </li>
-  <li class="nav-item">
-    <a
-      {{action "changeTab" "displayFields"}}
-      class="nav-link {{if (eq activeTab "displayFields") "active"}}"
-      href="#"
-    >
-      Fields
-    </a>
-  </li>
-</ul>
+{{#each block.data.details.messages as |message index|}}
+  <ul class='nav nav-tabs'>
+    <li class='nav-item'>
+      <a
+        {{action 'showFields' index}}
+        class='nav-link {{if message.showFields 'active'}}'
+        href='#'
+      >
+        Fields
+      </a>
+    </li>
+    <li class='nav-item'>
+      <a
+        {{action 'showMessages' index}}
+        class='nav-link {{if message.showMessages 'active'}}'
+        href='#'
+      >
+        _raw
+      </a>
+    </li>
+  </ul>
 
-{{#each block.data.details as |details|}}
-
-  {{#if (eq activeTab "displayMessages")}}
-    <div class="tab-container fields-block scrollable-block">
-      {{#each details.messages as |message|}}
-        <div>
-          <div class="message-block">message:</div>
-          <span>{{message.map._raw}}</span>
-        </div>
-      {{/each}}
+  {{#if message.showFields}}
+    <div class='tab-container'>
+      {{#each-in message.map as |key value|}}
+        {{#if (eq key '_raw')}}{{else}}
+          <div class='fields-block'>
+            <span class='field-key'>{{key}}</span>
+            <span class='field-value'>{{value}}</span>
+          </div>
+        {{/if}}
+      {{/each-in}}
     </div>
   {{/if}}
 
-  {{#if (eq activeTab "displayFields")}}
-    <div class="tab-container fields-block scrollable-block">
-      {{#each details.messages as |message index|}}
-        <div class="info-block">
-          <span class="field-title">Message Id: {{message.map._messageid}}</span>
-          {{#each-in message.map as |key value|}}
-            <div>
-              <span class="field-key">{{key}}</span>
-              <span class="field-value">{{value}}</span>
-            </div>
-          {{/each-in}}
-        </div>
-      {{/each}}
+  {{#if message.showMessages}}
+    <div class='tab-container fields-block scrollable-block'>
+      <div class='message-block'>message:</div>
+      <span>{{message.map._raw}}</span>
     </div>
   {{/if}}
 
