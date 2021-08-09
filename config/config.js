@@ -71,13 +71,13 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'info' //trace, debug, info, warn, error, fatal
+    level: 'trace' //trace, debug, info, warn, error, fatal
   },
   options: [
     {
       key: 'accessId',
       name: 'Access Id',
-      description: 'A valid Sumo Logic access id',
+      description: 'A valid Sumo Logic access id. ',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -93,9 +93,19 @@ module.exports = {
       adminOnly: false
     },
     {
+      key: 'query',
+      name: 'query',
+      description: 'query for messages',
+      default: '_sourceName =* and {{entity}}',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
       key: 'from',
       name: 'from',
-      description: 'Starting date and time range for requested logs',
+      description:
+        'The ISO 8601 date and time of the time range to start the search. use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -104,7 +114,8 @@ module.exports = {
     {
       key: 'to',
       name: 'to',
-      description: 'Ending date and time range for requested logs',
+      description:
+        'The ISO 8601 date and time of the time range to start the search. use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
       default: '',
       type: 'text',
       userCanEdit: false,
