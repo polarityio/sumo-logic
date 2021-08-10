@@ -23,10 +23,10 @@ module.exports = {
    * @optional
    */
   description:
-    'Searches the IntSights API and returns results from the most recent, relevant scan',
+    'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication. The API follows Representational State Transfer (REST) patterns and is optimized for ease of use and consistency',
   entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'SHA256'],
   onDemandOnly: true,
-  defaultColor: 'light-pink',
+  defaultColor: 'light-gray', //change to light-grey
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
    * the below files can be used in your custom template.
@@ -71,7 +71,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   options: [
     {
