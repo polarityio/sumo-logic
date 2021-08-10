@@ -1,41 +1,43 @@
 {{#each block.data.details.messages as |message index|}}
-  <ul class='nav nav-tabs'>
-    <li class='nav-item'>
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
       <a
-        {{action 'showFields' index}}
-        class='nav-link {{if message.showFields 'active'}}'
-        href='#'
+        {{action "showMessages" index}}
+        class="nav-link {{if message.showMessages "active"}}"
+        href="#"
       >
-        Fields
+        Messages
       </a>
     </li>
-    <li class='nav-item'>
+    <li class="nav-item">
       <a
-        {{action 'showMessages' index}}
-        class='nav-link {{if message.showMessages 'active'}}'
-        href='#'
+        {{action "showFields" index}}
+        class="nav-link {{if message.showFields "active"}}"
+        href="#"
       >
-        _raw
+        Fields
       </a>
     </li>
   </ul>
 
   {{#if message.showFields}}
-    <div class='tab-container'>
+    <div class="tab-container">
       {{#each-in message.map as |key value|}}
-        {{#if (eq key '_raw')}}{{else}}
-          <div class='fields-block'>
-            <span class='field-key'>{{key}}</span>
-            <span class='field-value'>{{value}}</span>
-          </div>
+        {{#if (eq key "_raw")}}{{else}}
+          {{#if (eq key "_view")}}{{else}}
+            <div class="fields-block">
+              <span class="field-key">{{key}}:</span>
+              <span class="field-value">{{value}}</span>
+            </div>
+          {{/if}}
         {{/if}}
       {{/each-in}}
     </div>
   {{/if}}
 
   {{#if message.showMessages}}
-    <div class='tab-container fields-block scrollable-block'>
-      <div class='message-block'>message:</div>
+    <div class="tab-container fields-block scrollable-block">
+      <div class="message-block">message:</div>
       <span>{{message.map._raw}}</span>
     </div>
   {{/if}}
