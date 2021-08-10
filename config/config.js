@@ -71,7 +71,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'info' //trace, debug, info, warn, error, fatal
+    level: 'trace' //trace, debug, info, warn, error, fatal
   },
   options: [
     {
@@ -134,7 +134,8 @@ module.exports = {
       key: 'byReceiptTime',
       name: 'byReceiptTime',
       description: '',
-      default: '',
+      default:
+        '	Define as true to run the search using receipt time. By default, searches do not run by receipt time.',
       type: 'text',
       userCanEdit: false,
       adminOnly: false

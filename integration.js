@@ -12,10 +12,6 @@ let Logger;
 
 function startup(logger) {
   Logger = logger;
-  /* 
-    - rate limit of four API requests per second (240 requests per minute) applies to all API calls from a user.
-    - rate limit of 10 concurrent requests to any API endpoint applies to an access key.
-  */
 }
 
 const requestDefaults = (options) => {
@@ -70,6 +66,8 @@ const doLookup = async (entities, options, cb) => {
     Logger.error({ err: handledError }, 'Lookup Error');
     return cb(handledError);
   }
+
+  Logger.trace({ lookupResults }, 'lookupResults');
   return cb(null, lookupResults);
 };
 
@@ -77,7 +75,7 @@ const createJob = async (entity, options) => {
   const query = options.query.replace(entityTemplateReplacementRegex, entity.value);
   const job = await gaxios.request({
     method: 'POST',
-    url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
+    url: `https://api.us2.sumologic.com/api/v1/search/jobs/asds`,
     data: JSON.stringify({
       query,
       from: options.from,
@@ -126,6 +124,7 @@ const getJobMessages = async (entity, options, callback) => {
 
   const createdJobId = await getCreatedJobId(entity, options).catch((err) => {
     if (err) {
+      Logger.trace({ ERR: err });
       throw err;
     }
   });
