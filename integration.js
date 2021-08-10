@@ -75,7 +75,7 @@ const createJob = async (entity, options) => {
   const query = options.query.replace(entityTemplateReplacementRegex, entity.value);
   const job = await gaxios.request({
     method: 'POST',
-    url: `https://api.us2.sumologic.com/api/v1/search/jobs/asds`,
+    url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
     data: JSON.stringify({
       query,
       from: options.from,
