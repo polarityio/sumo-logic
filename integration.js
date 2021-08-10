@@ -1,16 +1,14 @@
+const async = require('async');
 const gaxios = require('gaxios');
 const fs = require('fs');
 const https = require('https');
 const config = require('./config/config');
-const errorToPojo = require('./utils/errorToPojo');
-const Bottleneck = require('bottleneck');
-const { create } = require('domain');
+const gaxiosErrorToPojo = require('./utils/errorToPojo');
 
 const entityTemplateReplacementRegex = /{{entity}}/g;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 
 let Logger;
-let limiter;
 
 function startup(logger) {
   Logger = logger;
@@ -55,25 +53,24 @@ const requestDefaults = (options) => {
 };
 
 const doLookup = async (entities, options, cb) => {
+  let lookupResults;
+
   requestDefaults(options);
 
-  limiter = new Bottleneck({
-    maxConcurrent: 1,
-    minTime: 240,
-    highWater: 6,
-    strategy: Bottleneck.strategy.OVERFLOW
-  });
-
-  entities.forEach((entity) => {
-    limiter.submit(getJobMessages, entity, options, (err, result) => {
-      if (err) {
-        const handledError = handleError(err);
-        return cb(null, handledError);
-      } else {
-        return cb(null, result);
-      }
-    });
-  });
+  try {
+    lookupResults = await async.parallelLimit(
+      entities.map((entity) => async () => {
+        const lookupResult = await getJobMessages(entity, options);
+        return lookupResult;
+      }),
+      10
+    );
+  } catch (err) {
+    const handledError = gaxiosErrorToPojo(err);
+    Logger.error({ err: handledError }, 'Lookup Error');
+    return cb(handledError);
+  }
+  return cb(null, lookupResults);
 };
 
 const createJob = async (entity, options) => {
@@ -139,37 +136,13 @@ const getJobMessages = async (entity, options, callback) => {
       url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
-
-  return callback(null, [
-    { entity, data: { summary: getSummary(results.data), details: results.data } }
-  ]);
-};
-
-const handleError = async (err) => {
-  switch (err) {
-    case 405:
-      return {
-        err,
-        detail: err.message
-      };
-    case 404:
-      return {
-        err,
-        detail: err.message
-      };
-    case 401: {
-      return {
-        err,
-        detail: err.message
-      };
-    }
-    case 400: {
-      return {
-        err,
-        detail: err.message
-      };
-    }
-  }
+  return {
+    entity,
+    data:
+      Object.keys(results.data).length > 0
+        ? { summary: getSummary(results.data), details: results.data }
+        : null
+  };
 };
 
 function getSummary(data) {
@@ -228,7 +201,6 @@ module.exports = {
   doLookup,
   startup,
   createJob,
-  handleError,
   getCreatedJobId,
   validateOptions
 };
