@@ -119,7 +119,7 @@ const getCreatedJobId = async (entity, options) => {
   }
 };
 
-const getJobMessages = async (entity, options, callback) => {
+const getJobMessages = async (entity, options) => {
   let results;
 
   const createdJobId = await getCreatedJobId(entity, options).catch((err) => {
@@ -135,6 +135,7 @@ const getJobMessages = async (entity, options, callback) => {
       url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
+
   return {
     entity,
     data:
