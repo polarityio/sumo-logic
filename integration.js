@@ -76,13 +76,13 @@ const createJob = async (entity, options) => {
   const job = await gaxios.request({
     method: 'POST',
     url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
-    data: JSON.stringify({
+    data: {
       query,
       from: options.from,
       to: options.to,
       timeZone: options.timeZone,
       byReceiptTime: true
-    })
+    }
   });
   return job;
 };
