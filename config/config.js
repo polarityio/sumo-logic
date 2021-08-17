@@ -135,7 +135,7 @@ module.exports = {
       name: 'Search By Receipt Time',
       description:
         'Define as true to run the search using receipt time. By default, searches do not run by receipt time.',
-      default: '',
+      default: false,
       type: 'boolean',
       userCanEdit: false,
       adminOnly: false
