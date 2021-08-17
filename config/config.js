@@ -71,7 +71,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   options: [
     {
@@ -103,9 +103,9 @@ module.exports = {
     },
     {
       key: 'from',
-      name: 'from',
+      name: 'Search Start Date',
       description:
-        'The ISO 8601 date and time of the time range to start the search. use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
+        'The ISO 8601 date and time of the time range to start the search. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -113,9 +113,9 @@ module.exports = {
     },
     {
       key: 'to',
-      name: 'to',
+      name: 'Search End Date',
       description:
-        'The ISO 8601 date and time of the time range to start the search. use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
+        'The ISO 8601 date and time of the time range to end the search. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -123,7 +123,7 @@ module.exports = {
     },
     {
       key: 'timeZone',
-      name: 'timeZone',
+      name: 'Time zone for log search parameters',
       description: 'Timezone for logs, e.g. "PST"',
       default: '',
       type: 'text',
@@ -132,11 +132,11 @@ module.exports = {
     },
     {
       key: 'byReceiptTime',
-      name: 'byReceiptTime',
-      description: '',
-      default:
-        '	Define as true to run the search using receipt time. By default, searches do not run by receipt time.',
-      type: 'text',
+      name: 'Search By Receipt Time',
+      description:
+        'Define as true to run the search using receipt time. By default, searches do not run by receipt time.',
+      default: '',
+      type: 'boolean',
       userCanEdit: false,
       adminOnly: false
     }
