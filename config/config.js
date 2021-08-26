@@ -116,7 +116,7 @@ module.exports = {
       name: 'Search End Date',
       description:
         'The ISO 8601 date and time of the time range to end the search. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
-      default: '',
+      default: new Date().toISOString(),
       type: 'text',
       userCanEdit: false,
       adminOnly: false
@@ -125,7 +125,7 @@ module.exports = {
       key: 'timeZone',
       name: 'Time zone for log search parameters',
       description: 'Timezone for logs, e.g. "PST"',
-      default: '',
+      default: 'EST',
       type: 'text',
       userCanEdit: false,
       adminOnly: false
