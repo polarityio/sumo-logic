@@ -2,8 +2,9 @@
 
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
-  onDetailsOpened() {
-    this.get('block.data.details.messages').forEach((result, index) => {
+  init: function () {
+    this._super(...arguments);
+    this.get('block.data.details.messages').forEach((result) => {
       Ember.set(result, 'showFields', false);
       Ember.set(result, 'showMessages', true);
     });
