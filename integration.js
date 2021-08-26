@@ -56,8 +56,14 @@ const doLookup = async (entities, options, cb) => {
   try {
     lookupResults = await async.parallelLimit(
       entities.map((entity) => async () => {
-        const lookupResult = await getJobMessages(entity, options);
-        return lookupResult;
+        const lookupResult = await getJobMessages(entity, options, cb);
+        Logger.trace({ lookupResult: lookupResult });
+        return _isMiss(lookupResult)
+          ? {
+              entity,
+              data: null
+            }
+          : lookupResult;
       }),
       10
     );
@@ -91,40 +97,38 @@ const getCreatedJobId = async (entity, options) => {
   let result;
 
   try {
-    const job = await createJob(entity, options).catch((err) => {
-      if (err) {
-        throw err;
-      }
-    });
+    const job = await createJob(entity, options);
 
-    const getJobResults = async () => {
-      result = await gaxios.request({
-        method: 'GET',
-        url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
-      });
+    if (Object.keys(job).length > 0) {
+      const getJobResults = async () => {
+        result = await gaxios.request({
+          method: 'GET',
+          url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
+        });
 
-      if (result.data.state === 'DONE GATHERING RESULTS') {
-        return {
-          jobId: job.data.id
-        };
-      } else {
-        await sleep(1000);
-        return getJobResults();
-      }
-    };
+        if (result.data.state === 'DONE GATHERING RESULTS') {
+          return {
+            jobId: job.data.id
+          };
+        } else {
+          await sleep(1000);
+          return getJobResults();
+        }
+      };
 
-    return getJobResults();
+      return getJobResults();
+    }
   } catch (err) {
     throw err;
   }
 };
 
-const getJobMessages = async (entity, options) => {
+const getJobMessages = async (entity, options, cb) => {
   let results;
 
   const createdJobId = await getCreatedJobId(entity, options).catch((err) => {
     if (err) {
-      Logger.trace({ ERR: err });
+      Logger.error({ ERR: err });
       throw err;
     }
   });
@@ -135,6 +139,8 @@ const getJobMessages = async (entity, options) => {
       url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
+
+  Logger.trace({ RES: results });
 
   return {
     entity,
@@ -147,6 +153,7 @@ const getJobMessages = async (entity, options) => {
 
 function getSummary(data) {
   let tags = [];
+  let cache = [];
 
   if (Object.keys(data).length > 0) {
     const totalMessages = data.messages.length;
@@ -155,7 +162,10 @@ function getSummary(data) {
 
   if (Object.keys(data).length > 0) {
     data.messages.map((message) => {
-      tags.push(`_Source: ${message.map._source}`);
+      if (!cache.includes(message.map._source)) {
+        tags.push(`_Source: ${message.map._source}`);
+        cache.push(message.map._source);
+      }
     });
   }
   return tags;
@@ -182,15 +192,14 @@ function validateOptions(options, callback) {
   validateOption(errors, options, 'from', 'You must provide a date range.');
   validateOption(errors, options, 'to', 'You must provide a date range.');
   validateOption(errors, options, 'timeZone', 'You must provide a valid timezone.');
-  validateOption(
-    errors,
-    options,
-    'byReceiptTime',
-    'You must provide a valid byReceiptTime.'
-  );
 
   callback(null, errors);
 }
+
+const _isMiss = (lookupResult) =>
+  !lookupResult ||
+  lookupResult.data.details.messages.length <= 0 ||
+  lookupResult.data.details.fields.length <= 0;
 
 const sleep = async (time) =>
   new Promise((res, rej) => {
