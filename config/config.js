@@ -77,7 +77,7 @@ module.exports = {
     {
       key: 'accessId',
       name: 'Access Id',
-      description: 'A valid Sumo Logic access id. ',
+      description: 'A valid Sumo Logic access id.',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -95,36 +95,50 @@ module.exports = {
     {
       key: 'query',
       name: 'query',
-      description: 'query for messages',
+      description:
+        'The search expression. Make sure your query is valid JSON format following RFC 8259, you may need to escape certain characters.',
       default: '_sourceName =* and {{entity}}',
       type: 'text',
       userCanEdit: false,
       adminOnly: false
     },
     {
-      key: 'from',
-      name: 'Search Start Date',
-      description:
-        'The ISO 8601 date and time of the time range to start the search. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
-      default: '',
-      type: 'text',
+      key: 'timeRange',
+      name: 'Time Range',
+      description: 'The ISO 8601 The start and end time ranges for the search',
+      default: {
+        value: 'week',
+        display: 'Week'
+      },
+      type: 'select',
+      options: [
+        {
+          value: 'day',
+          display: 'Day'
+        },
+        {
+          value: 'week',
+          display: 'Week'
+        },
+        {
+          value: 'month',
+          display: 'Month'
+        },
+        {
+          value: 'year',
+          display: 'Year'
+        }
+      ],
+      multiple: false,
       userCanEdit: false,
       adminOnly: false
     },
-    {
-      key: 'to',
-      name: 'Search End Date',
-      description:
-        'The ISO 8601 date and time of the time range to end the search. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
-      default: new Date().toISOString(),
-      type: 'text',
-      userCanEdit: false,
-      adminOnly: false
-    },
+
     {
       key: 'timeZone',
       name: 'Time zone for log search parameters',
-      description: 'Timezone for logs, e.g. "PST"',
+      description: `The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of time zone codes.
+      Alternatively, you can use the parameter timezone instead of timeZone.`,
       default: 'EST',
       type: 'text',
       userCanEdit: false,
