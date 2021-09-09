@@ -5,7 +5,9 @@ const https = require('https');
 const config = require('./config/config');
 const gaxiosErrorToPojo = require('./utils/errorToPojo');
 
+const { formatISO, subDays, subWeeks, subMonths, subYears } = require('date-fns');
 const entityTemplateReplacementRegex = /{{entity}}/g;
+
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 
 let Logger;
@@ -13,6 +15,25 @@ let Logger;
 function startup(logger) {
   Logger = logger;
 }
+
+const getStartDate = (options) => {
+  let currentDate = new Date();
+  let range;
+
+  switch (options.timeRange.value) {
+    case 'day':
+      range = subDays(currentDate, 1);
+    case 'week':
+      range = subWeeks(currentDate, 1);
+    case 'month':
+      range = subMonths(currentDate, 1);
+    case 'year':
+      range = subYears(currentDate, 1);
+    default:
+      null;
+  }
+  return formatISO(range);
+};
 
 const requestDefaults = (options) => {
   const {
@@ -40,11 +61,7 @@ const requestDefaults = (options) => {
         Buffer.from(options.accessId + ':' + options.accessKey).toString('base64'),
       'Content-type': 'application/json'
     },
-    retryConfig: {
-      retry: 6,
-      httpMethodsToRetry: ['GET', 'POST'],
-      retryDelay: 1000
-    }
+    retry: false
   };
 };
 
@@ -56,8 +73,7 @@ const doLookup = async (entities, options, cb) => {
   try {
     lookupResults = await async.parallelLimit(
       entities.map((entity) => async () => {
-        const lookupResult = await getJobMessages(entity, options, cb);
-        Logger.trace({ lookupResult: lookupResult });
+        const lookupResult = await getJobMessages(entity, options);
         return _isMiss(lookupResult)
           ? {
               entity,
@@ -79,13 +95,15 @@ const doLookup = async (entities, options, cb) => {
 
 const createJob = async (entity, options) => {
   const query = options.query.replace(entityTemplateReplacementRegex, entity.value);
+  const endDate = formatISO(new Date());
+
   const job = await gaxios.request({
     method: 'POST',
     url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
     data: {
       query,
-      from: options.from,
-      to: options.to,
+      from: getStartDate(options),
+      to: endDate,
       timeZone: options.timeZone,
       byReceiptTime: true
     }
@@ -123,7 +141,7 @@ const getCreatedJobId = async (entity, options) => {
   }
 };
 
-const getJobMessages = async (entity, options, cb) => {
+const getJobMessages = async (entity, options) => {
   let results;
 
   const createdJobId = await getCreatedJobId(entity, options).catch((err) => {
@@ -139,8 +157,6 @@ const getJobMessages = async (entity, options, cb) => {
       url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
-
-  Logger.trace({ RES: results });
 
   return {
     entity,
@@ -187,11 +203,11 @@ function validateOption(errors, options, optionName, errMessage) {
 function validateOptions(options, callback) {
   let errors = [];
 
-  validateOption(errors, options, 'accessId', 'You must provide a valid accessId.');
-  validateOption(errors, options, 'accessKey', 'You must provide a valid accessKey.');
-  validateOption(errors, options, 'from', 'You must provide a date range.');
-  validateOption(errors, options, 'to', 'You must provide a date range.');
-  validateOption(errors, options, 'timeZone', 'You must provide a valid timezone.');
+  validateOption(errors, options, 'accessId', 'You must provide a valid access id.');
+  validateOption(errors, options, 'accessKey', 'You must provide a valid access key.');
+  validateOption(errors, options, 'timeZone', 'You must provide a valid time zone.');
+  validateOption(errors, options, 'timeRange', 'You must provide a valid time range.');
+  validateOption(errors, options, 'query', 'You must provide a valid query.');
 
   callback(null, errors);
 }
