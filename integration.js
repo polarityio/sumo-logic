@@ -10,9 +10,26 @@ const entityTemplateReplacementRegex = /{{entity}}/g;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 
 let Logger;
+let httpsAgent;
 
 function startup(logger) {
+  const {
+    request: { ca, cert, key, passphrase, proxy }
+  } = config;
+
   Logger = logger;
+
+  if (_configFieldIsValid(proxy)) {
+    process.env.HTTP_PROXY = proxy;
+    process.env.HTTPS_PROXY = proxy;
+  }
+
+  httpsAgent = new https.Agent({
+    ...(_configFieldIsValid(ca) && { ca: fs.readFileSync(ca) }),
+    ...(_configFieldIsValid(cert) && { cert: fs.readFileSync(cert) }),
+    ...(_configFieldIsValid(key) && { key: fs.readFileSync(key) }),
+    ...(_configFieldIsValid(passphrase) && { passphrase })
+  });
 }
 
 const getStartDate = (options) => {
@@ -48,23 +65,6 @@ const getStartDate = (options) => {
 };
 
 const requestDefaults = (options) => {
-  const {
-    request: { ca, cert, key, passphrase, rejectUnauthorized, proxy }
-  } = config;
-
-  const httpsAgent = new https.Agent({
-    ...(_configFieldIsValid(ca) && { ca: fs.readFileSync(ca) }),
-    ...(_configFieldIsValid(cert) && { cert: fs.readFileSync(cert) }),
-    ...(_configFieldIsValid(key) && { key: fs.readFileSync(key) }),
-    ...(_configFieldIsValid(passphrase) && { passphrase }),
-    ...(typeof rejectUnauthorized === 'boolean' && { rejectUnauthorized })
-  });
-
-  if (_configFieldIsValid(proxy)) {
-    process.env.HTTP_PROXY = proxy;
-    process.env.HTTPS_PROXY = proxy;
-  }
-
   gaxios.instance.defaults = {
     agent: httpsAgent,
     headers: {
@@ -154,7 +154,7 @@ const getCreatedJobId = async (entity, options) => {
       return getJobResults();
     }
   } catch (err) {
-    Logger.error(err, "Error in getCreatedJobId");
+    Logger.error(err, 'Error in getCreatedJobId');
     throw err;
   }
 };
@@ -175,7 +175,6 @@ const getJobMessages = async (entity, options) => {
       url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
-
   return {
     entity,
     data:
