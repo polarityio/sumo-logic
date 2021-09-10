@@ -1,26 +1,34 @@
 const { GaxiosError } = require('gaxios');
 
+function getData(err) {
+  if (err.response && err.response.data) {
+    return err.response.data;
+  }
+  return {};
+}
+
+function getDetail(err) {
+  if (err.response && err.response.data && err.response.data.message) {
+    return err.response.data.message;
+  } else if (err.response && err.response.status === 503) {
+    return `Lookup limit reached.  Please wait a moment and try searching fewer indicators.`;
+  } else if (err.response) {
+    return `Received unexpected HTTP status ${err.response.status}`;
+  } else if (err.request) {
+    return `There was an HTTP error`;
+  } else {
+    return 'There was an unexpected error';
+  }
+}
+
 function gaxiosErrorToPojo(err) {
   if (err instanceof GaxiosError) {
-    let detail = 'There was an unexpected error';
-    let data = '';
-    if (err.response && err.response.status === 503) {
-      detail = `Lookup limit reached.  Please wait a moment and try searching fewer indicators.`;
-      data = err.response.data;
-    } else if (err.response) {
-      detail = `Received unexpected HTTP status ${err.response.status}`;
-      data = err.response.data;
-    } else if (err.request) {
-      detail = `There was an HTTP error`;
-    } else {
-      detail = err.message;
-    }
     return {
       name: err.name,
       message: err.message,
       request: err.request,
-      data,
-      detail
+      data: getData(err),
+      detail: getDetail(err)
     };
   } else if (err instanceof Error) {
     // Handle Node Errors as well as FetchError

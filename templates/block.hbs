@@ -6,7 +6,7 @@
         class="nav-link {{if message.showMessages "active"}}"
         href="#"
       >
-        Messages
+        Message
       </a>
     </li>
     <li class="nav-item">
@@ -21,13 +21,13 @@
   </ul>
 
   {{#if message.showFields}}
-    <div class="tab-container">
+    <div class="tab-container mt-1">
       {{#each-in message.map as |key value|}}
         {{#if (eq key "_raw")}}{{else}}
           {{#if (eq key "_view")}}{{else}}
-            <div class="fields-block">
-              <span class="field-key">{{key}}:</span>
-              <span class="field-value">{{value}}</span>
+            <div>
+              <span class="p-key">{{key}}:</span>
+              <span class="p-value">{{value}}</span>
             </div>
           {{/if}}
         {{/if}}
@@ -36,8 +36,7 @@
   {{/if}}
 
   {{#if message.showMessages}}
-    <div class="tab-container fields-block scrollable-block">
-      <div class="message-block">message:</div>
+    <div class="tab-container fields-block scrollable-block mt-1">
       <pre>{{message.map._raw}}</pre>
     </div>
   {{/if}}

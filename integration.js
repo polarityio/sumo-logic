@@ -4,10 +4,9 @@ const fs = require('fs');
 const https = require('https');
 const config = require('./config/config');
 const gaxiosErrorToPojo = require('./utils/errorToPojo');
-
 const { formatISO, subDays, subWeeks, subMonths, subYears } = require('date-fns');
-const entityTemplateReplacementRegex = /{{entity}}/g;
 
+const entityTemplateReplacementRegex = /{{entity}}/g;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 
 let Logger;
@@ -19,18 +18,31 @@ function startup(logger) {
 const getStartDate = (options) => {
   let currentDate = new Date();
   let range;
-
   switch (options.timeRange.value) {
-    case 'day':
+    case '-1d':
       range = subDays(currentDate, 1);
-    case 'week':
+      break;
+    case '-1w':
       range = subWeeks(currentDate, 1);
-    case 'month':
+      break;
+    case '-1m':
       range = subMonths(currentDate, 1);
-    case 'year':
+      break;
+    case '-3m':
+      range = subMonths(currentDate, 3);
+      break;
+    case '-6m':
+      range = subMonths(currentDate, 6);
+      break;
+    case '-1y':
       range = subYears(currentDate, 1);
+      break;
+    case '-3y':
+      range = subYears(currentDate, 3);
+      break;
     default:
-      null;
+      // default is last year
+      range = subYears(currentDate, 1);
   }
   return formatISO(range);
 };
@@ -84,8 +96,10 @@ const doLookup = async (entities, options, cb) => {
       10
     );
   } catch (err) {
+    Logger.error(err);
     const handledError = gaxiosErrorToPojo(err);
     Logger.error({ err: handledError }, 'Lookup Error');
+
     return cb(handledError);
   }
 
@@ -96,10 +110,9 @@ const doLookup = async (entities, options, cb) => {
 const createJob = async (entity, options) => {
   const query = options.query.replace(entityTemplateReplacementRegex, entity.value);
   const endDate = formatISO(new Date());
-
-  const job = await gaxios.request({
+  const requestOptions = {
     method: 'POST',
-    url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
+    url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs`,
     data: {
       query,
       from: getStartDate(options),
@@ -107,7 +120,10 @@ const createJob = async (entity, options) => {
       timeZone: options.timeZone,
       byReceiptTime: true
     }
-  });
+  };
+
+  Logger.trace({ requestOptions }, 'Request Options');
+  const job = await gaxios.request(requestOptions);
   return job;
 };
 
@@ -116,12 +132,13 @@ const getCreatedJobId = async (entity, options) => {
 
   try {
     const job = await createJob(entity, options);
-
     if (Object.keys(job).length > 0) {
       const getJobResults = async () => {
+        // Wait an initial 1000ms before polling for first time
+        await sleep(1000);
         result = await gaxios.request({
           method: 'GET',
-          url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
+          url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${job.data.id}`
         });
 
         if (result.data.state === 'DONE GATHERING RESULTS') {
@@ -137,6 +154,7 @@ const getCreatedJobId = async (entity, options) => {
       return getJobResults();
     }
   } catch (err) {
+    Logger.error(err, "Error in getCreatedJobId");
     throw err;
   }
 };
@@ -154,7 +172,7 @@ const getJobMessages = async (entity, options) => {
   if (createdJobId) {
     results = await gaxios.request({
       method: 'GET',
-      url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
+      url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
 
@@ -206,7 +224,6 @@ function validateOptions(options, callback) {
   validateOption(errors, options, 'accessId', 'You must provide a valid access id.');
   validateOption(errors, options, 'accessKey', 'You must provide a valid access key.');
   validateOption(errors, options, 'timeZone', 'You must provide a valid time zone.');
-  validateOption(errors, options, 'timeRange', 'You must provide a valid time range.');
   validateOption(errors, options, 'query', 'You must provide a valid query.');
 
   callback(null, errors);

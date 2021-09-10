@@ -15,7 +15,7 @@ module.exports = {
    * @type String
    * @required
    */
-  acronym: 'SL',
+  acronym: 'SUMO',
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
    *
@@ -23,8 +23,8 @@ module.exports = {
    * @optional
    */
   description:
-    'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication. The API follows Representational State Transfer (REST) patterns and is optimized for ease of use and consistency',
-  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'SHA256'],
+    'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.',
+  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'hash', 'email'],
   onDemandOnly: true,
   defaultColor: 'light-gray', //change to light-grey
   /**
@@ -53,16 +53,16 @@ module.exports = {
   },
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     cert: '',
     // Provide the path to your private key. Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     key: '',
     // Provide the key passphrase if required.  Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     passphrase: '',
     // Provide the Certificate Authority. Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
@@ -93,40 +93,103 @@ module.exports = {
       adminOnly: false
     },
     {
+      key: 'apiDeployment',
+      name: 'Sumo Logic API Deployment Location',
+      description: 'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
+      default: {
+        value: 'us1',
+        display: 'US1'
+      },
+      type: 'select',
+      options: [
+        {
+          value: 'us1',
+          display: 'US1'
+        },
+        {
+          value: 'us2',
+          display: 'US2'
+        },
+        {
+          value: 'au',
+          display: 'AU'
+        },
+        {
+          value: 'ca',
+          display: 'CA'
+        },
+        {
+          value: 'de',
+          display: 'DE'
+        },
+        {
+          value: 'eu',
+          display: 'EU'
+        },
+        {
+          value: 'fed',
+          display: 'FED'
+        },
+        {
+          value: 'in',
+          display: 'IN'
+        },
+        {
+          value: 'jp',
+          display: 'JP'
+        }
+      ],
+      multiple: false,
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
       key: 'query',
       name: 'query',
       description:
         'The search expression. Make sure your query is valid JSON format following RFC 8259, you may need to escape certain characters.',
-      default: '_sourceName =* and {{entity}}',
+      default: '_sourceName=* and {{entity}} | LIMIT 10',
       type: 'text',
       userCanEdit: false,
       adminOnly: false
     },
     {
       key: 'timeRange',
-      name: 'Time Range',
-      description: 'The ISO 8601 The start and end time ranges for the search',
+      name: 'Search Window',
+      description: 'The search window for your search',
       default: {
-        value: 'week',
-        display: 'Week'
+        value: '-3m',
+        display: 'Last 3 Months'
       },
       type: 'select',
       options: [
         {
-          value: 'day',
-          display: 'Day'
+          value: '-1d',
+          display: 'Last Day'
         },
         {
-          value: 'week',
-          display: 'Week'
+          value: '-1w',
+          display: 'Last Week'
         },
         {
-          value: 'month',
-          display: 'Month'
+          value: '-1m',
+          display: 'Last Month'
         },
         {
-          value: 'year',
-          display: 'Year'
+          value: '-3m',
+          display: 'Last 3 Months'
+        },
+        {
+          value: '-6m',
+          display: 'Last 6 Months'
+        },
+        {
+          value: '-1y',
+          display: 'Last Year'
+        },
+        {
+          value: '-3y',
+          display: 'Last 3 Years'
         }
       ],
       multiple: false,
@@ -137,8 +200,7 @@ module.exports = {
     {
       key: 'timeZone',
       name: 'Time zone for log search parameters',
-      description: `The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of time zone codes.
-      Alternatively, you can use the parameter timezone instead of timeZone.`,
+      description: `The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.`,
       default: 'EST',
       type: 'text',
       userCanEdit: false,
@@ -148,7 +210,7 @@ module.exports = {
       key: 'byReceiptTime',
       name: 'Search By Receipt Time',
       description:
-        'Define as true to run the search using receipt time. By default, searches do not run by receipt time.',
+        'Define as true to run the search using receipt time which is the order that Collectors received the messages. By default, searches do not run by receipt time.',
       default: false,
       type: 'boolean',
       userCanEdit: false,
