@@ -1,6 +1,6 @@
 # Polarity Sumo Logic Integration
 
-Sumo Logic, Inc. is a cloud-based machine data analytics company focusing on security, operations and BI usecases. It provides log management and analytics services that leverage machine-generated big data to deliver real-time IT insights.
+Sumo Logic, Inc. is a cloud-based machine data analytics company focusing on security, operations and BI use cases. It provides log management and analytics services that leverage machine-generated big data to deliver real-time IT insights.
 
 <img width="350" alt="Integration Example" src="./assets/sumo-logic.png">
 
@@ -25,14 +25,14 @@ The query will default to creating a job that will include ALL messages containi
 - Query
   The query along with a time range and timezone must be executed as valid JSON. The search query can use the templated `{{entity}}` variable, which will be set as the entity the user is searching.
 
-- From
-  The start of the requested time range for logs. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.
-
-- To
-  The end of the requested time range for logs. Use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.
+- timeRange
+  The search window for your search. This option defaults to search the last 3 months.
 
 - timeZone
-  The time zone if from/to is not in milliseconds. See this Wikipedia article for a list of time zone codes.
+  The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of time zone codes.
+
+- apiDeployment
+  Your Sumo Logic deployment endpoint location. For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security
 
 - byReceiptTime
   Define as true to run the search using receipt time. By default, searches do not run by receipt time.
