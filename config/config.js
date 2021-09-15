@@ -15,7 +15,7 @@ module.exports = {
    * @type String
    * @required
    */
-  acronym: 'SL',
+  acronym: 'SUMO',
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
    *
@@ -23,8 +23,8 @@ module.exports = {
    * @optional
    */
   description:
-    'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication. The API follows Representational State Transfer (REST) patterns and is optimized for ease of use and consistency',
-  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'SHA256'],
+    'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.',
+  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'hash', 'email', 'cve'],
   onDemandOnly: true,
   defaultColor: 'light-gray', //change to light-grey
   /**
@@ -53,16 +53,16 @@ module.exports = {
   },
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     cert: '',
     // Provide the path to your private key. Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     key: '',
     // Provide the key passphrase if required.  Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     passphrase: '',
     // Provide the Certificate Authority. Leave an empty string to ignore this option.
-    // Relative paths are relative to the UrlScan integration's root directory
+    // Relative paths are relative to the integration's root directory
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
@@ -71,13 +71,13 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   options: [
     {
       key: 'accessId',
       name: 'Access Id',
-      description: 'A valid Sumo Logic access id. ',
+      description: 'A valid Sumo Logic access id.',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -93,50 +93,125 @@ module.exports = {
       adminOnly: false
     },
     {
+      key: 'apiDeployment',
+      name: 'Sumo Logic API Deployment Location',
+      description: 'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
+      default: {
+        value: 'us1',
+        display: 'US1'
+      },
+      type: 'select',
+      options: [
+        {
+          value: 'us1',
+          display: 'US1'
+        },
+        {
+          value: 'us2',
+          display: 'US2'
+        },
+        {
+          value: 'au',
+          display: 'AU'
+        },
+        {
+          value: 'ca',
+          display: 'CA'
+        },
+        {
+          value: 'de',
+          display: 'DE'
+        },
+        {
+          value: 'eu',
+          display: 'EU'
+        },
+        {
+          value: 'fed',
+          display: 'FED'
+        },
+        {
+          value: 'in',
+          display: 'IN'
+        },
+        {
+          value: 'jp',
+          display: 'JP'
+        }
+      ],
+      multiple: false,
+      userCanEdit: false,
+      adminOnly: false
+    },
+    {
       key: 'query',
       name: 'query',
-      description: 'query for messages',
-      default: '_sourceName =* and {{entity}}',
+      description:
+        'The search expression.',
+      default: '_sourceName=* "{{entity}}" | LIMIT 10',
       type: 'text',
       userCanEdit: false,
       adminOnly: false
     },
     {
-      key: 'from',
-      name: 'from',
-      description:
-        'The ISO 8601 date and time of the time range to start the search. use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
-      default: '',
-      type: 'text',
-      userCanEdit: false,
-      adminOnly: false
-    },
-    {
-      key: 'to',
-      name: 'to',
-      description:
-        'The ISO 8601 date and time of the time range to start the search. use the form YYYY-MM-DDTHH:mm:ss, or 2017-07-16T00:00:00.',
-      default: '',
-      type: 'text',
+      key: 'timeRange',
+      name: 'Search Window',
+      description: 'The search window for your search.',
+      default: {
+        value: '-3m',
+        display: 'Last 3 Months'
+      },
+      type: 'select',
+      options: [
+        {
+          value: '-1d',
+          display: 'Last Day'
+        },
+        {
+          value: '-1w',
+          display: 'Last Week'
+        },
+        {
+          value: '-1m',
+          display: 'Last Month'
+        },
+        {
+          value: '-3m',
+          display: 'Last 3 Months'
+        },
+        {
+          value: '-6m',
+          display: 'Last 6 Months'
+        },
+        {
+          value: '-1y',
+          display: 'Last Year'
+        },
+        {
+          value: '-3y',
+          display: 'Last 3 Years'
+        }
+      ],
+      multiple: false,
       userCanEdit: false,
       adminOnly: false
     },
     {
       key: 'timeZone',
-      name: 'timeZone',
-      description: 'Timezone for logs, e.g. "PST"',
-      default: '',
+      name: 'Time zone for log search parameters',
+      description: `The time zone to be used for the search. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.`,
+      default: 'EST',
       type: 'text',
       userCanEdit: false,
       adminOnly: false
     },
     {
       key: 'byReceiptTime',
-      name: 'byReceiptTime',
-      description: '',
-      default:
-        '	Define as true to run the search using receipt time. By default, searches do not run by receipt time.',
-      type: 'text',
+      name: 'Search By Receipt Time',
+      description:
+        'Define as true to run the search using receipt time which is the order that Collectors received the messages. By default, searches do not run by receipt time.',
+      default: false,
+      type: 'boolean',
       userCanEdit: false,
       adminOnly: false
     }

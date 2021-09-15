@@ -4,34 +4,67 @@ const fs = require('fs');
 const https = require('https');
 const config = require('./config/config');
 const gaxiosErrorToPojo = require('./utils/errorToPojo');
+const { formatISO, subDays, subWeeks, subMonths, subYears } = require('date-fns');
 
 const entityTemplateReplacementRegex = /{{entity}}/g;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 
 let Logger;
+let httpsAgent;
 
 function startup(logger) {
-  Logger = logger;
-}
-
-const requestDefaults = (options) => {
   const {
-    request: { ca, cert, key, passphrase, rejectUnauthorized, proxy }
+    request: { ca, cert, key, passphrase, proxy }
   } = config;
 
-  const httpsAgent = new https.Agent({
-    ...(_configFieldIsValid(ca) && { ca: fs.readFileSync(ca) }),
-    ...(_configFieldIsValid(cert) && { cert: fs.readFileSync(cert) }),
-    ...(_configFieldIsValid(key) && { key: fs.readFileSync(key) }),
-    ...(_configFieldIsValid(passphrase) && { passphrase }),
-    ...(typeof rejectUnauthorized === 'boolean' && { rejectUnauthorized })
-  });
+  Logger = logger;
 
   if (_configFieldIsValid(proxy)) {
     process.env.HTTP_PROXY = proxy;
     process.env.HTTPS_PROXY = proxy;
   }
 
+  httpsAgent = new https.Agent({
+    ...(_configFieldIsValid(ca) && { ca: fs.readFileSync(ca) }),
+    ...(_configFieldIsValid(cert) && { cert: fs.readFileSync(cert) }),
+    ...(_configFieldIsValid(key) && { key: fs.readFileSync(key) }),
+    ...(_configFieldIsValid(passphrase) && { passphrase })
+  });
+}
+
+const getStartDate = (options) => {
+  let currentDate = new Date();
+  let range;
+  switch (options.timeRange.value) {
+    case '-1d':
+      range = subDays(currentDate, 1);
+      break;
+    case '-1w':
+      range = subWeeks(currentDate, 1);
+      break;
+    case '-1m':
+      range = subMonths(currentDate, 1);
+      break;
+    case '-3m':
+      range = subMonths(currentDate, 3);
+      break;
+    case '-6m':
+      range = subMonths(currentDate, 6);
+      break;
+    case '-1y':
+      range = subYears(currentDate, 1);
+      break;
+    case '-3y':
+      range = subYears(currentDate, 3);
+      break;
+    default:
+      // default is last year
+      range = subYears(currentDate, 1);
+  }
+  return formatISO(range);
+};
+
+const requestDefaults = (options) => {
   gaxios.instance.defaults = {
     agent: httpsAgent,
     headers: {
@@ -40,11 +73,7 @@ const requestDefaults = (options) => {
         Buffer.from(options.accessId + ':' + options.accessKey).toString('base64'),
       'Content-type': 'application/json'
     },
-    retryConfig: {
-      retry: 6,
-      httpMethodsToRetry: ['GET', 'POST'],
-      retryDelay: 1000
-    }
+    retry: false
   };
 };
 
@@ -57,13 +86,20 @@ const doLookup = async (entities, options, cb) => {
     lookupResults = await async.parallelLimit(
       entities.map((entity) => async () => {
         const lookupResult = await getJobMessages(entity, options);
-        return lookupResult;
+        return _isMiss(lookupResult)
+          ? {
+              entity,
+              data: null
+            }
+          : lookupResult;
       }),
       10
     );
   } catch (err) {
+    Logger.error(err);
     const handledError = gaxiosErrorToPojo(err);
     Logger.error({ err: handledError }, 'Lookup Error');
+
     return cb(handledError);
   }
 
@@ -73,17 +109,21 @@ const doLookup = async (entities, options, cb) => {
 
 const createJob = async (entity, options) => {
   const query = options.query.replace(entityTemplateReplacementRegex, entity.value);
-  const job = await gaxios.request({
+  const endDate = formatISO(new Date());
+  const requestOptions = {
     method: 'POST',
-    url: `https://api.us2.sumologic.com/api/v1/search/jobs`,
-    data: JSON.stringify({
+    url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs`,
+    data: {
       query,
-      from: options.from,
-      to: options.to,
+      from: getStartDate(options),
+      to: endDate,
       timeZone: options.timeZone,
       byReceiptTime: true
-    })
-  });
+    }
+  };
+
+  Logger.trace({ requestOptions }, 'Request Options');
+  const job = await gaxios.request(requestOptions);
   return job;
 };
 
@@ -91,30 +131,30 @@ const getCreatedJobId = async (entity, options) => {
   let result;
 
   try {
-    const job = await createJob(entity, options).catch((err) => {
-      if (err) {
-        throw err;
-      }
-    });
-
-    const getJobResults = async () => {
-      result = await gaxios.request({
-        method: 'GET',
-        url: `https://api.us2.sumologic.com/api/v1/search/jobs/${job.data.id}`
-      });
-
-      if (result.data.state === 'DONE GATHERING RESULTS') {
-        return {
-          jobId: job.data.id
-        };
-      } else {
+    const job = await createJob(entity, options);
+    if (Object.keys(job).length > 0) {
+      const getJobResults = async () => {
+        // Wait an initial 1000ms before polling for first time
         await sleep(1000);
-        return getJobResults();
-      }
-    };
+        result = await gaxios.request({
+          method: 'GET',
+          url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${job.data.id}`
+        });
 
-    return getJobResults();
+        if (result.data.state === 'DONE GATHERING RESULTS') {
+          return {
+            jobId: job.data.id
+          };
+        } else {
+          await sleep(1000);
+          return getJobResults();
+        }
+      };
+
+      return getJobResults();
+    }
   } catch (err) {
+    Logger.error(err, 'Error in getCreatedJobId');
     throw err;
   }
 };
@@ -124,7 +164,7 @@ const getJobMessages = async (entity, options) => {
 
   const createdJobId = await getCreatedJobId(entity, options).catch((err) => {
     if (err) {
-      Logger.trace({ ERR: err });
+      Logger.error({ ERR: err });
       throw err;
     }
   });
@@ -132,10 +172,9 @@ const getJobMessages = async (entity, options) => {
   if (createdJobId) {
     results = await gaxios.request({
       method: 'GET',
-      url: `https://api.us2.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
+      url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
-
   return {
     entity,
     data:
@@ -147,6 +186,7 @@ const getJobMessages = async (entity, options) => {
 
 function getSummary(data) {
   let tags = [];
+  let cache = {};
 
   if (Object.keys(data).length > 0) {
     const totalMessages = data.messages.length;
@@ -155,7 +195,10 @@ function getSummary(data) {
 
   if (Object.keys(data).length > 0) {
     data.messages.map((message) => {
-      tags.push(`_Source: ${message.map._source}`);
+      if (!cache[message.map._source]) {
+        tags.push(`_Source: ${message.map._source}`);
+        cache[message.map._source] = true;
+      }
     });
   }
   return tags;
@@ -177,20 +220,18 @@ function validateOption(errors, options, optionName, errMessage) {
 function validateOptions(options, callback) {
   let errors = [];
 
-  validateOption(errors, options, 'accessId', 'You must provide a valid accessId.');
-  validateOption(errors, options, 'accessKey', 'You must provide a valid accessKey.');
-  validateOption(errors, options, 'from', 'You must provide a date range.');
-  validateOption(errors, options, 'to', 'You must provide a date range.');
-  validateOption(errors, options, 'timeZone', 'You must provide a valid timezone.');
-  validateOption(
-    errors,
-    options,
-    'byReceiptTime',
-    'You must provide a valid byReceiptTime.'
-  );
+  validateOption(errors, options, 'accessId', 'You must provide a valid access id.');
+  validateOption(errors, options, 'accessKey', 'You must provide a valid access key.');
+  validateOption(errors, options, 'timeZone', 'You must provide a valid time zone.');
+  validateOption(errors, options, 'query', 'You must provide a valid query.');
 
   callback(null, errors);
 }
+
+const _isMiss = (lookupResult) =>
+  !lookupResult ||
+  lookupResult.data.details.messages.length <= 0 ||
+  lookupResult.data.details.fields.length <= 0;
 
 const sleep = async (time) =>
   new Promise((res, rej) => {

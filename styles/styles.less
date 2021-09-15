@@ -1,22 +1,13 @@
 pre {
-  overflow-y: scroll;
-  overflow-x: hidden;
-  max-height: 500px;
-  padding: 5px;
-  margin-top: 5px;
   background-color: #fff;
   font-family: 'Lucida Console', Monaco, monospace;
-}
-
-div.tab-container {
-  margin-top: 5px;
+  // prevents horizontal scroll bars and instead wraps long strings
+  white-space: pre-line;
+  line-height: 1.1rem;
 }
 
 div.scrollable-block {
   overflow-y: scroll;
-  overflow-x: hidden;
-  resize: vertical;
-  min-height: 150px;
   max-height: 200px;
 }
 
@@ -26,26 +17,6 @@ div.fields-block {
   line-height: 2em;
   font-size: 11px;
   font-weight: 400;
-
-  span.field-key {
-    word-break: normal;
-    display: inline;
-    margin-right: 5px;
-    font-weight: normal;
-  }
-
-  span.field-value {
-    background-color: rgba(0, 46, 63, 0.1);
-    padding: 1px 5px;
-    word-break: normal;
-    border-radius: 2px;
-    color: #000;
-    display: inline;
-    margin-right: 5px;
-    font-weight: bold;
-    display: inline;
-    word-break: break-all;
-  }
 }
 
 div.message-block {
