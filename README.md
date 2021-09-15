@@ -30,7 +30,7 @@ The search window for your search
 
 ## Time zone for log search parameters
 
-The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.
+The time zone to be used for the search. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.
 
 ## Search By Receipt Time
 
@@ -42,9 +42,9 @@ You can find documentation on the Sumo Logic Query Language here: https://help.s
 
 In general, queries that work through the Sumo Logic web interface can also be used in this integration.
 
-The default query will default to creating a job that will include ALL messages containing the entity that the user is searching. Defaults to: '\_sourceName =\* and {{entity}}'
+The default query will default to creating a job that will include the first 10 messages containing the entity that the user is searching. Defaults to: '\_sourceName=\* "{{entity}}" | LIMIT 10'
 
-Example requests:
+Example request:
 
 ```
  "query": "* | parse "GET * " as {{entity}}
@@ -60,6 +60,8 @@ If a user is searching the IP, 1.2.3.4 - then, it will replace the templated ent
 ```
 
 # Troubleshooting
+
+The error `Job ID is invalid.` is returned for certain invalid queries. If you see this error, please double-check that your search query works from the Sumo Logic web interface. 
 
 ## Installation Instructions
 
