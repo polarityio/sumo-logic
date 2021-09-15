@@ -1,12 +1,11 @@
 {
   "main": "./integration.js",
   "name": "sumo-logic",
-  "version": "3.0.0-beta4",
+  "version": "3.0.0-beta",
   "private": true,
   "dependencies": {
-    "async": "^3.2.0",
-    "bottleneck": "^2.19.5",
+    "async": "^3.2.1",
     "date-fns": "^2.23.0",
-    "gaxios": "^4.3.0"
+    "gaxios": "^4.3.2"
   }
 }
