@@ -186,7 +186,7 @@ const getJobMessages = async (entity, options) => {
 
 function getSummary(data) {
   let tags = [];
-  let cache = [];
+  let cache = {};
 
   if (Object.keys(data).length > 0) {
     const totalMessages = data.messages.length;
@@ -195,9 +195,9 @@ function getSummary(data) {
 
   if (Object.keys(data).length > 0) {
     data.messages.map((message) => {
-      if (!cache.includes(message.map._source)) {
+      if (!cache[message.map._source]) {
         tags.push(`_Source: ${message.map._source}`);
-        cache.push(message.map._source);
+        cache[message.map._source] = true;
       }
     });
   }
