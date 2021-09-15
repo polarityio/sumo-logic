@@ -24,7 +24,7 @@ module.exports = {
    */
   description:
     'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.',
-  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'hash', 'email'],
+  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'hash', 'email', 'cve'],
   onDemandOnly: true,
   defaultColor: 'light-gray', //change to light-grey
   /**
@@ -147,8 +147,8 @@ module.exports = {
       key: 'query',
       name: 'query',
       description:
-        'The search expression. Make sure your query is valid JSON format following RFC 8259, you may need to escape certain characters.',
-      default: '_sourceName=* and {{entity}} | LIMIT 10',
+        'The search expression.',
+      default: '_sourceName=* "{{entity}}" | LIMIT 10',
       type: 'text',
       userCanEdit: false,
       adminOnly: false
@@ -156,7 +156,7 @@ module.exports = {
     {
       key: 'timeRange',
       name: 'Search Window',
-      description: 'The search window for your search',
+      description: 'The search window for your search.',
       default: {
         value: '-3m',
         display: 'Last 3 Months'
@@ -199,7 +199,7 @@ module.exports = {
     {
       key: 'timeZone',
       name: 'Time zone for log search parameters',
-      description: `The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.`,
+      description: `The time zone to be used for the search. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.`,
       default: 'EST',
       type: 'text',
       userCanEdit: false,

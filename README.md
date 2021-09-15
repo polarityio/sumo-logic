@@ -1,8 +1,8 @@
 # Polarity Sumo Logic Integration
 
-Sumo Logic, Inc. is a cloud-based machine data analytics company focusing on security, operations and BI use cases. It provides log management and analytics services that leverage machine-generated big data to deliver real-time IT insights.
+Sumo Logic, Inc. is a cloud-based machine data analytics company focusing on security, operations and BI use cases. It provides log management and analytics services that leverage machine-generated big data to deliver real-time IT insights.  This integration will run the provided search query and return the first 10 results.
 
-<img width="350" alt="Integration Example" src="./assets/sumo-logic.png">
+<img width="50%" alt="Integration Example" src="./assets/overlay.png">
 
 To learn more about Sumo Logic, please visit: https://www.sumologic.com/
 
@@ -14,54 +14,52 @@ A valid Sumo Logic access Id. An access Id can be generated in your Sumo Logic d
 
 ## Access Key
 
-A valid Sumo Logic access key. An access Key can be generated in your Sumo Logic dashboard(make sure to save this somewhere, it can only be viewed once).
+A valid Sumo Logic access key associated with the provided Access ID. An access Key can be generated in your Sumo Logic dashboard (make sure to save this somewhere, it can only be viewed once).
 
-## Creating a Sumo Logic Job
+## Sumo Logic API Deployment Location
 
-Sumo Logic Query Language docs: https://help.sumologic.com/05Search/Search-Query-Language
+Your Sumo Logic deployment endpoint location. For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security
 
-The query will default to creating a job that will include ALL messages containing the entity that the user is searching. Defaults to: '\_sourceName =\* and {{entity}}'
+## Query
 
-- Query
-  The query along with a time range and timezone must be executed as valid JSON. The search query can use the templated `{{entity}}` variable, which will be set as the entity the user is searching.
+The search expression. 
 
-- timeRange
-  The search window for your search. This option defaults to search the last 3 months.
+## Search Window
 
-- timeZone
-  The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of time zone codes.
+The search window for your search
 
-- apiDeployment
-  Your Sumo Logic deployment endpoint location. For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security
+## Time zone for log search parameters
 
-- byReceiptTime
-  Define as true to run the search using receipt time. By default, searches do not run by receipt time.
+The time zone if from/to is not in milliseconds. See this Wikipedia article - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones, for a list of valid time zone codes.
 
-```
+## Search By Receipt Time
+
+Define as true to run the search using receipt time which is the order that Collectors received the messages. By default, searches do not run by receipt time.
+
+# Sumo Logic Search Queries
+
+You can find documentation on the Sumo Logic Query Language here: https://help.sumologic.com/05Search/Search-Query-Language
+
+In general, queries that work through the Sumo Logic web interface can also be used in this integration.
+
+The default query will default to creating a job that will include ALL messages containing the entity that the user is searching. Defaults to: '\_sourceName =\* and {{entity}}'
+
 Example requests:
 
-{
+```
  "query": "* | parse "GET * " as {{entity}}
  | count by {{entity}}
  | top 10 {{entity}} by _count"
-   "from": "2019-05-03T12:00:00",
-  "to": "2019-05-03T12:05:00",
-  "timeZone": "IST",
-  "byReceiptTime": true
-{
+```
+If a user is searching the IP, 1.2.3.4 - then, it will replace the templated entity value.
 
-If a user is searching the IP,  1.2.3.4 - then, it will replace the templated entity value.
-
-{
+```
  "query": "* | parse "GET * " as {{1.2.3.4}}
  | count by {{1.2.3.4}}
  | top 10 {{1.2.3.4}} by _count"
-   "from": "2019-05-03T12:00:00",
-  "to": "2019-05-03T12:05:00",
-  "timeZone": "IST",
-  "byReceiptTime": true
-{
 ```
+
+# Troubleshooting
 
 ## Installation Instructions
 
