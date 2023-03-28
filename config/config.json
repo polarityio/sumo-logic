@@ -1,4 +1,5 @@
 {
+  "polarityIntegrationUuid": "f59a2020-cce1-11ed-aeee-075d3490155d",
   "name": "Sumo Logic",
   "acronym": "SUMO",
   "description": "The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.",
