@@ -16,8 +16,7 @@
     "key": "",
     "passphrase": "",
     "ca": "",
-    "proxy": "",
-    "rejectUnauthorized": true
+    "proxy": ""
   },
   "logging": { "level": "info" },
   "options": [
