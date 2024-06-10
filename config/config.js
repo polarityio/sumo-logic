@@ -66,7 +66,7 @@ module.exports = {
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
-    proxy: ""
+    proxy: ''
   },
   logging: {
     level: 'info' //trace, debug, info, warn, error, fatal
@@ -93,47 +93,48 @@ module.exports = {
     {
       key: 'apiDeployment',
       name: 'Sumo Logic API Deployment Location',
-      description: 'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
+      description:
+        'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
       default: {
-        value: 'us1',
+        value: '.',
         display: 'US1'
       },
       type: 'select',
       options: [
         {
-          value: 'us1',
+          value: '.',
           display: 'US1'
         },
         {
-          value: 'us2',
+          value: '.us2.',
           display: 'US2'
         },
         {
-          value: 'au',
+          value: '.au.',
           display: 'AU'
         },
         {
-          value: 'ca',
+          value: '.ca.',
           display: 'CA'
         },
         {
-          value: 'de',
+          value: '.de.',
           display: 'DE'
         },
         {
-          value: 'eu',
+          value: '.eu.',
           display: 'EU'
         },
         {
-          value: 'fed',
+          value: '.fed.',
           display: 'FED'
         },
         {
-          value: 'in',
+          value: '.in.',
           display: 'IN'
         },
         {
-          value: 'jp',
+          value: '.jp.',
           display: 'JP'
         }
       ],
@@ -144,8 +145,7 @@ module.exports = {
     {
       key: 'query',
       name: 'query',
-      description:
-        'The search expression.',
+      description: 'The search expression.',
       default: '_sourceName=* "{{entity}}" | LIMIT 10',
       type: 'text',
       userCanEdit: false,

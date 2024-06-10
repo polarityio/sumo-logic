@@ -112,7 +112,7 @@ const createJob = async (entity, options) => {
   const endDate = formatISO(new Date());
   const requestOptions = {
     method: 'POST',
-    url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs`,
+    url: `https://api${options.apiDeployment.value}sumologic.com/api/v1/search/jobs`,
     data: {
       query,
       from: getStartDate(options),
@@ -138,7 +138,7 @@ const getCreatedJobId = async (entity, options) => {
         await sleep(1000);
         result = await gaxios.request({
           method: 'GET',
-          url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${job.data.id}`
+          url: `https://api${options.apiDeployment.value}sumologic.com/api/v1/search/jobs/${job.data.id}`
         });
 
         if (result.data.state === 'DONE GATHERING RESULTS') {
@@ -172,7 +172,7 @@ const getJobMessages = async (entity, options) => {
   if (createdJobId) {
     results = await gaxios.request({
       method: 'GET',
-      url: `https://api.${options.apiDeployment.value}.sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
+      url: `https://api${options.apiDeployment.value}sumologic.com/api/v1/search/jobs/${createdJobId.jobId}/messages?offset=0&limit=10`
     });
   }
   return {
