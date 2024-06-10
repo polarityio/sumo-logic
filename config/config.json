@@ -3,13 +3,27 @@
   "name": "Sumo Logic",
   "acronym": "SUMO",
   "description": "The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.",
-  "entityTypes": ["IPv4", "IPv6", "domain", "url", "hash", "email", "cve"],
+  "entityTypes": [
+    "IPv4",
+    "IPv6",
+    "domain",
+    "url",
+    "hash",
+    "email",
+    "cve"
+  ],
   "onDemandOnly": true,
   "defaultColor": "light-gray",
-  "styles": ["./styles/styles.less"],
+  "styles": [
+    "./styles/styles.less"
+  ],
   "block": {
-    "component": { "file": "./components/block.js" },
-    "template": { "file": "./templates/block.hbs" }
+    "component": {
+      "file": "./components/block.js"
+    },
+    "template": {
+      "file": "./templates/block.hbs"
+    }
   },
   "request": {
     "cert": "",
@@ -18,7 +32,9 @@
     "ca": "",
     "proxy": ""
   },
-  "logging": { "level": "info" },
+  "logging": {
+    "level": "info"
+  },
   "options": [
     {
       "key": "accessId",
@@ -42,18 +58,48 @@
       "key": "apiDeployment",
       "name": "Sumo Logic API Deployment Location",
       "description": "Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security",
-      "default": { "value": ".", "display": "US1" },
+      "default": {
+        "value": ".",
+        "display": "US1"
+      },
       "type": "select",
       "options": [
-        { "value": ".", "display": "US1" },
-        { "value": ".us2.", "display": "US2" },
-        { "value": ".au.", "display": "AU" },
-        { "value": ".ca.", "display": "CA" },
-        { "value": ".de.", "display": "DE" },
-        { "value": ".eu.", "display": "EU" },
-        { "value": ".fed.", "display": "FED" },
-        { "value": ".in.", "display": "IN" },
-        { "value": ".jp.", "display": "JP" }
+        {
+          "value": ".",
+          "display": "US1"
+        },
+        {
+          "value": ".us2.",
+          "display": "US2"
+        },
+        {
+          "value": ".au.",
+          "display": "AU"
+        },
+        {
+          "value": ".ca.",
+          "display": "CA"
+        },
+        {
+          "value": ".de.",
+          "display": "DE"
+        },
+        {
+          "value": ".eu.",
+          "display": "EU"
+        },
+        {
+          "value": ".fed.",
+          "display": "FED"
+        },
+        {
+          "value": ".in.",
+          "display": "IN"
+        },
+        {
+          "value": ".jp.",
+          "display": "JP"
+        }
       ],
       "multiple": false,
       "userCanEdit": false,
@@ -72,16 +118,40 @@
       "key": "timeRange",
       "name": "Search Window",
       "description": "The search window for your search.",
-      "default": { "value": "-3m", "display": "Last 3 Months" },
+      "default": {
+        "value": "-3m",
+        "display": "Last 3 Months"
+      },
       "type": "select",
       "options": [
-        { "value": "-1d", "display": "Last Day" },
-        { "value": "-1w", "display": "Last Week" },
-        { "value": "-1m", "display": "Last Month" },
-        { "value": "-3m", "display": "Last 3 Months" },
-        { "value": "-6m", "display": "Last 6 Months" },
-        { "value": "-1y", "display": "Last Year" },
-        { "value": "-3y", "display": "Last 3 Years" }
+        {
+          "value": "-1d",
+          "display": "Last Day"
+        },
+        {
+          "value": "-1w",
+          "display": "Last Week"
+        },
+        {
+          "value": "-1m",
+          "display": "Last Month"
+        },
+        {
+          "value": "-3m",
+          "display": "Last 3 Months"
+        },
+        {
+          "value": "-6m",
+          "display": "Last 6 Months"
+        },
+        {
+          "value": "-1y",
+          "display": "Last Year"
+        },
+        {
+          "value": "-3y",
+          "display": "Last 3 Years"
+        }
       ],
       "multiple": false,
       "userCanEdit": false,

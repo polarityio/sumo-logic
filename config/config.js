@@ -66,7 +66,7 @@ module.exports = {
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
-    proxy: ""
+    proxy: ''
   },
   logging: {
     level: 'info' //trace, debug, info, warn, error, fatal
@@ -93,7 +93,8 @@ module.exports = {
     {
       key: 'apiDeployment',
       name: 'Sumo Logic API Deployment Location',
-      description: 'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
+      description:
+        'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
       default: {
         value: '.',
         display: 'US1'
@@ -144,8 +145,7 @@ module.exports = {
     {
       key: 'query',
       name: 'query',
-      description:
-        'The search expression.',
+      description: 'The search expression.',
       default: '_sourceName=* "{{entity}}" | LIMIT 10',
       type: 'text',
       userCanEdit: false,
