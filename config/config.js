@@ -95,45 +95,45 @@ module.exports = {
       name: 'Sumo Logic API Deployment Location',
       description: 'Your Sumo Logic deployment endpoint location.  For more information, please see: https://help.sumologic.com/APIs/General-API-Information/Sumo-Logic-Endpoints-and-Firewall-Security',
       default: {
-        value: 'us1',
+        value: '.',
         display: 'US1'
       },
       type: 'select',
       options: [
         {
-          value: 'us1',
+          value: '.',
           display: 'US1'
         },
         {
-          value: 'us2',
+          value: '.us2.',
           display: 'US2'
         },
         {
-          value: 'au',
+          value: '.au.',
           display: 'AU'
         },
         {
-          value: 'ca',
+          value: '.ca.',
           display: 'CA'
         },
         {
-          value: 'de',
+          value: '.de.',
           display: 'DE'
         },
         {
-          value: 'eu',
+          value: '.eu.',
           display: 'EU'
         },
         {
-          value: 'fed',
+          value: '.fed.',
           display: 'FED'
         },
         {
-          value: 'in',
+          value: '.in.',
           display: 'IN'
         },
         {
-          value: 'jp',
+          value: '.jp.',
           display: 'JP'
         }
       ],
