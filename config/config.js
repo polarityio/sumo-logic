@@ -24,7 +24,7 @@ module.exports = {
    */
   description:
     'The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.',
-  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'hash', 'email', 'cve'],
+  entityTypes: ['IPv4', 'IPv6', 'domain', 'url', 'MD5', 'SHA1', 'SHA256', 'email', 'cve'],
   onDemandOnly: true,
   defaultColor: 'light-gray', //change to light-grey
   /**
