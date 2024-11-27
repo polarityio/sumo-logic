@@ -3,6 +3,8 @@
   "name": "Sumo Logic",
   "acronym": "SUMO",
   "description": "The Sumo Logic Search Job API provides third-party scripts and applications access to your log data through access key/access ID authentication.",
+  "supportsAdditionalCustomTypes": true,
+  "dataTypes": ["IPv4", "IPv6", "domain", "url", "MD5", "SHA1", "SHA256", "email", "cve"],
   "entityTypes": [
     "IPv4",
     "IPv6",
