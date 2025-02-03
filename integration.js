@@ -6,7 +6,7 @@ const config = require('./config/config');
 const gaxiosErrorToPojo = require('./utils/errorToPojo');
 const { formatISO, subDays, subWeeks, subMonths, subYears } = require('date-fns');
 
-const entityTemplateReplacementRegex = /{{entity}}/g;
+const entityTemplateReplacementRegex = /{{entity}}/gi;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
 
 let Logger;
