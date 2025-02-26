@@ -6,9 +6,9 @@ const config = require('./config/config');
 const gaxiosErrorToPojo = require('./utils/errorToPojo');
 const { formatISO, subDays, subWeeks, subMonths, subYears } = require('date-fns');
 
-const entityTemplateReplacementRegex = /{{entity}}/g;
+const entityTemplateReplacementRegex = /{{entity}}/gi;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
-
+const MAX_TAGS = 3;
 let Logger;
 let httpsAgent;
 
@@ -185,22 +185,35 @@ const getJobMessages = async (entity, options) => {
 };
 
 function getSummary(data) {
-  let tags = [];
-  let cache = {};
+  let tags = new Set();
 
   if (Object.keys(data).length > 0) {
     const totalMessages = data.messages.length;
-    tags.push(`Messages: ${totalMessages}`);
+    tags.add(`Messages: ${totalMessages}`);
   }
 
+  // For a list of built-in metadata fields that can be present see:
+  // https://help.sumologic.com/docs/metrics/introduction/built-in-metadata/
   if (Object.keys(data).length > 0) {
-    data.messages.map((message) => {
-      if (!cache[message.map._source]) {
-        tags.push(`_Source: ${message.map._source}`);
-        cache[message.map._source] = true;
+    data.messages.forEach((message) => {
+      if (message.map._source) {
+        tags.add(`Source: ${message.map._source}`);
+      } else if (message.map._sourcename) {
+        tags.add(`Name: ${message.map._sourcename}`);
+      } else if (message.map._sourcecategory) {
+        tags.add(`Category: ${message.map._sourcecategory}`);
       }
     });
   }
+
+  tags = [...tags];
+
+  if (tags.length > MAX_TAGS) {
+    let length = tags.length;
+    tags = tags.slice(0, MAX_TAGS);
+    tags.push(`+${length - MAX_TAGS} more`);
+  }
+
   return tags;
 }
 
