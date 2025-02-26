@@ -193,11 +193,19 @@ function getSummary(data) {
     tags.push(`Messages: ${totalMessages}`);
   }
 
+  // For a list of built-in metadata fields that can be present see:
+  // https://help.sumologic.com/docs/metrics/introduction/built-in-metadata/
   if (Object.keys(data).length > 0) {
     data.messages.map((message) => {
-      if (!cache[message.map._source]) {
-        tags.push(`_Source: ${message.map._source}`);
+      if (!cache[message.map._source] && message.map._source) {
+        tags.push(`Source: ${message.map._source}`);
         cache[message.map._source] = true;
+      } else if (!cache[message.map._sourcename] && message.map._sourcename) {
+        tags.push(`Name: ${message.map._sourcename}`);
+        cache[message.map._sourcename] = true;
+      } else if (!cache[message.map._sourcecategory] && message.map._sourcecategory) {
+        tags.push(`Category: ${message.map._sourcecategory}`);
+        cache[message.map._sourcecategory] = true;
       }
     });
   }
