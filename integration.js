@@ -8,7 +8,7 @@ const { formatISO, subDays, subWeeks, subMonths, subYears } = require('date-fns'
 
 const entityTemplateReplacementRegex = /{{entity}}/gi;
 const _configFieldIsValid = (field) => typeof field === 'string' && field.length > 0;
-
+const MAX_TAGS = 3;
 let Logger;
 let httpsAgent;
 
@@ -195,7 +195,7 @@ function getSummary(data) {
   // For a list of built-in metadata fields that can be present see:
   // https://help.sumologic.com/docs/metrics/introduction/built-in-metadata/
   if (Object.keys(data).length > 0) {
-    data.messages.map((message) => {
+    data.messages.forEach((message) => {
       if (message.map._source) {
         tags.add(`Source: ${message.map._source}`);
       } else if (message.map._sourcename) {
@@ -205,7 +205,16 @@ function getSummary(data) {
       }
     });
   }
-  return [...tags];
+
+  tags = [...tags];
+
+  if (tags.length > MAX_TAGS) {
+    let length = tags.length;
+    tags = tags.slice(0, MAX_TAGS);
+    tags.push(`+${length - MAX_TAGS} more`);
+  }
+
+  return tags;
 }
 
 function validateOption(errors, options, optionName, errMessage) {
